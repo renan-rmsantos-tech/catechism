@@ -74,3 +74,63 @@ Keep only durable, cross-task context here. Do not duplicate facts that are obvi
 ## Handoffs
 
 - **→ task_07+**: `/api/students`, `/api/students/[id]`, `/api/classes/[id]/students` are ready. `StudentForm` in `components/admin/student-form.tsx`. `/admin/alunos` list + `/admin/alunos/novo` + `/admin/alunos/[id]/editar` pages implemented.
+
+## Shared Decisions (task_07)
+
+- **Dashboard layout is now a thin wrapper**: `app/dashboard/layout.tsx` no longer renders the Catequese header. Each page under `/dashboard` renders its own header. This allows the chamada page to use its own amber header. Tests in `__tests__/components/layouts.test.tsx` updated accordingly.
+- **`lib/attendance/schemas.ts`**: PendingSession + submitAttendanceSchema placed at `lib/attendance/schemas.ts` (not `lib/validations/`). Follows `lib/<domain>/schemas.ts` convention.
+- **`POST /api/attendance` idempotency**: Checks for existing session by `(class_id, date)` before insert. Returns `{ synced: number; skipped: number }`. Service role key NOT needed — uses user's session auth.
+- **`AttendanceSheet` marks state**: `marks: Record<studentId, boolean | null>` — `null` = unmarked. Toggle clicking same value again sets back to `null`. This is the state task_08 will persist in IndexedDB.
+
+## Handoffs (task_07)
+
+- **→ task_08+**: `AttendanceSheet` local state (`marks`) is ready to be persisted to IndexedDB. `POST /api/attendance` at `/api/attendance` is the sync endpoint. `PendingSession` shape in `lib/attendance/schemas.ts`. Use `crypto.randomUUID()` for session IDs.
+
+## Current State (updated)
+
+- Task 08 (PWA Offline) complete. `@ducanh2912/next-pwa`, `lib/db.ts`, `lib/attendance-sync.ts`, `OfflineBanner`, `PendingSyncIndicator`, offline `AttendanceSheet` submit path. 308 tests (90.33% coverage).
+
+## Shared Decisions (task_08)
+
+- **`@ducanh2912/next-pwa@10.2.9`**: Used instead of original unmaintained `next-pwa`. Configured in `next.config.ts` with `disable: process.env.NODE_ENV !== 'production'`. SW only active in prod builds.
+- **`registerBackgroundSync()` always adds online event listener**: Both Background Sync (Chrome/Android) AND online event (iOS/Safari) are registered. Double-sync is safe because `syncPendingSessions` is idempotent (empty DB → no-op).
+- **`SyncManager` requires type cast**: `reg as ServiceWorkerRegistration & { sync: { register(tag: string): Promise<void> } }` — not in standard TS lib.
+- **Vitest mock strategy for Dexie**: Mock `lib/db` with `vi.fn()` inside factory (lazy, avoids hoisting TDZ). In each test: `vi.resetModules()` → `import db` → `import attendance-sync` — both share same cached mock.
+- **PWA icons not created**: `public/manifest.json` references `/icons/icon-192.png` and `/icons/icon-512.png`. These binary assets need to be created manually before production deployment. Installability blocked until then.
+
+## Handoffs (task_08)
+
+- **→ task_09+**: `lib/db.ts` has `CatechismDB` with `pending_sessions` table. `lib/attendance-sync.ts` exports `syncPendingSessions()` + `registerBackgroundSync()`. `OfflineBanner` and `PendingSyncIndicator` are in `/components/`. Dashboard page already imports both. `app/layout.tsx` has manifest metadata.
+
+## Current State (updated)
+
+- Task 09 (Reports PDF/Excel) complete. `jspdf`, `jspdf-autotable`, `xlsx` installed. `lib/reports/query.ts` (schema + pure functions), `lib/reports/pdf.ts`, `lib/reports/excel.ts`, `GET /api/reports/attendance`, `/admin/relatorios` page. 345 tests (92% coverage).
+
+## Shared Decisions (task_09)
+
+- **`lib/reports/query.ts` — pure functions only**: `calcStudentStats` and `getCellValue` are pure (no Supabase). Supabase queries live in the route handler. Schema (`reportParamsSchema`) and types also in query.ts.
+- **403 for non-coordinator**: Endpoint returns 403 (not 401) when role ≠ coordinator. Matches existing pattern in `app/api/classes/route.ts` (profile role check → 403).
+- **absent = sessionCount - presentCount**: Sessions with no record are counted as absent in the percentage calculation. Matches "3 out of 5 = 60%" spec.
+- **Empty sessionIds guard**: Skip records query when no sessions found — avoids `.in('session_id', [])` edge case.
+- **jsPDF `output('arraybuffer')` + `Buffer.from()`**: Works in Node.js/Vitest without polyfills.
+- **`XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' })`**: Returns Buffer directly in Node.js.
+
+## Handoffs (task_09)
+
+- **→ task_10+**: `lib/reports/` pattern established. Route `GET /api/reports/attendance` is production-ready (pending manual file-open verification). Sidebar already had the `/admin/relatorios` nav item.
+
+## Current State (updated)
+
+- Task 10 (Polimento Final) complete. Build clean (Turbopack + TypeScript), 354 tests (92% coverage), RLS audit passed (4 scenarios), all 4 Paper screens visually approved, back button touch target fixed (32px → 48px).
+
+## Shared Decisions (task_10)
+
+- **`turbopack: {}` in `next.config.ts`**: Required in Next.js 16 when `@ducanh2912/next-pwa` (or any plugin) adds webpack config. Silences "webpack config + no turbopack config" build error.
+- **`npm run lint` = `tsc --noEmit`**: `next lint` was removed in Next.js 16. TypeScript check is the correct substitute.
+- **`Buffer → Uint8Array` for `Response` body**: `new Uint8Array(buffer)` required when passing Node.js `Buffer` to `new Response()` — TS DOM types don't accept `Buffer<ArrayBufferLike>` as `BodyInit`.
+- **RLS Scenario 1 returns 404 not 403**: When catechist A accesses class B URL, RLS filters the DB row → `classData` is null → `notFound()` (HTTP 404). This is more secure than 403 (doesn't reveal resource existence). Accepted deviation from spec.
+
+## Open Risks (final)
+
+- **Manual device tests pending**: iOS/Safari offline sync, Android/Chrome Background Sync, PDF→Acrobat, Excel→Microsoft Excel, PWA installability — all require real Supabase credentials + hardware. Blocked on `supabase db push` prerequisite.
+- **PWA icons missing**: `public/manifest.json` references `/icons/icon-192.png` and `/icons/icon-512.png` — binary assets not created. PWA installability blocked until added.

@@ -73,7 +73,7 @@ export async function GET(request: NextRequest) {
   if (format === 'pdf') {
     const buffer = generatePdf(reportData)
     const filename = `relatorio-${from}-${to}.pdf`
-    return new Response(buffer, {
+    return new Response(new Uint8Array(buffer), {
       headers: {
         'Content-Type': 'application/pdf',
         'Content-Disposition': `attachment; filename="${filename}"`,
@@ -83,7 +83,7 @@ export async function GET(request: NextRequest) {
 
   const buffer = generateExcel(reportData)
   const filename = `relatorio-${from}-${to}.xlsx`
-  return new Response(buffer, {
+  return new Response(new Uint8Array(buffer), {
     headers: {
       'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       'Content-Disposition': `attachment; filename="${filename}"`,

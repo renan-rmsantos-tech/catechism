@@ -109,7 +109,7 @@ export default function AttendanceSheet({
         <div className="flex items-center gap-3 mb-2">
           <Link
             href="/dashboard"
-            className="flex items-center justify-center w-8 h-8 rounded-full"
+            className="flex items-center justify-center w-12 h-12 rounded-full"
             aria-label="Voltar para Minhas Turmas"
             style={{ color: 'white' }}
           >
