@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent, act } from '@testing-library/react'
 import AttendanceSheet from '@/components/dashboard/attendance-sheet'
 
@@ -17,6 +17,19 @@ vi.mock('next/link', () => ({
       {children}
     </a>
   ),
+}))
+
+vi.mock('@/lib/db', () => ({
+  db: {
+    pending_sessions: {
+      add: vi.fn().mockResolvedValue(undefined),
+    },
+  },
+}))
+
+vi.mock('@/lib/attendance-sync', () => ({
+  registerBackgroundSync: vi.fn(),
+  syncPendingSessions: vi.fn(),
 }))
 
 const STUDENTS = [
@@ -177,6 +190,86 @@ describe('AttendanceSheet — confirm submission', () => {
       fireEvent.click(screen.getByTestId('btn-confirm'))
     })
     expect(screen.getByText('Erro ao salvar chamada')).toBeInTheDocument()
+  })
+})
+
+describe('AttendanceSheet — offline submit', () => {
+  beforeEach(() => {
+    Object.defineProperty(navigator, 'onLine', {
+      value: false,
+      writable: true,
+      configurable: true,
+    })
+    vi.stubGlobal('crypto', {
+      randomUUID: vi.fn().mockReturnValue('550e8400-e29b-41d4-a716-446655440099'),
+    })
+  })
+
+  afterEach(() => {
+    Object.defineProperty(navigator, 'onLine', {
+      value: true,
+      writable: true,
+      configurable: true,
+    })
+  })
+
+  it('saves to IndexedDB instead of calling fetch when offline', async () => {
+    const mockFetch = vi.fn()
+    vi.stubGlobal('fetch', mockFetch)
+
+    const { db } = await import('@/lib/db')
+    const addFn = db.pending_sessions.add as ReturnType<typeof vi.fn>
+    addFn.mockClear()
+
+    render(<AttendanceSheet {...DEFAULT_PROPS} />)
+    for (const student of STUDENTS) {
+      fireEvent.click(screen.getByTestId(`btn-present-${student.id}`))
+    }
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('btn-confirm'))
+    })
+
+    expect(mockFetch).not.toHaveBeenCalled()
+    expect(addFn).toHaveBeenCalledTimes(1)
+  })
+
+  it('shows offline-saved message after saving to IndexedDB', async () => {
+    vi.stubGlobal('fetch', vi.fn())
+
+    render(<AttendanceSheet {...DEFAULT_PROPS} />)
+    for (const student of STUDENTS) {
+      fireEvent.click(screen.getByTestId(`btn-present-${student.id}`))
+    }
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('btn-confirm'))
+    })
+
+    expect(screen.getByTestId('offline-saved-message')).toBeInTheDocument()
+    expect(screen.getByTestId('offline-saved-message')).toHaveTextContent(
+      'Chamada salva. Será sincronizada quando a conexão retornar.'
+    )
+  })
+
+  it('saves session with correct shape to IndexedDB', async () => {
+    vi.stubGlobal('fetch', vi.fn())
+
+    const { db } = await import('@/lib/db')
+    const addFn = db.pending_sessions.add as ReturnType<typeof vi.fn>
+    addFn.mockClear()
+
+    render(<AttendanceSheet {...DEFAULT_PROPS} />)
+    for (const student of STUDENTS) {
+      fireEvent.click(screen.getByTestId(`btn-present-${student.id}`))
+    }
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('btn-confirm'))
+    })
+
+    const savedSession = addFn.mock.calls[0][0]
+    expect(savedSession.classId).toBe(DEFAULT_PROPS.classId)
+    expect(savedSession.date).toBe(DEFAULT_PROPS.date)
+    expect(savedSession.catechistId).toBe(DEFAULT_PROPS.catechistId)
+    expect(savedSession.records).toHaveLength(STUDENTS.length)
   })
 })
 

@@ -11,6 +11,7 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Catequese",
   description: "Sistema de gestão de presença para catecismo",
+  manifest: "/manifest.json",
 };
 
 export default function RootLayout({

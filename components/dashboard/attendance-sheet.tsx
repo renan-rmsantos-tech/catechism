@@ -1,8 +1,10 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { db } from '@/lib/db'
+import { registerBackgroundSync } from '@/lib/attendance-sync'
 
 interface Student {
   id: string
@@ -34,6 +36,11 @@ export default function AttendanceSheet({
   )
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [offlineSaved, setOfflineSaved] = useState(false)
+
+  useEffect(() => {
+    registerBackgroundSync()
+  }, [])
 
   const toggle = useCallback((studentId: string, value: boolean) => {
     setMarks((prev) => ({
@@ -67,14 +74,20 @@ export default function AttendanceSheet({
     }
 
     try {
-      const res = await fetch('/api/attendance', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessions: [session] }),
-      })
-      if (!res.ok) throw new Error('Erro ao salvar chamada')
-      router.push('/dashboard')
-      router.refresh()
+      if (navigator.onLine) {
+        const res = await fetch('/api/attendance', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessions: [session] }),
+        })
+        if (!res.ok) throw new Error('Erro ao salvar chamada')
+        router.push('/dashboard')
+        router.refresh()
+      } else {
+        await db.pending_sessions.add(session)
+        setOfflineSaved(true)
+        setSubmitting(false)
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Erro desconhecido')
       setSubmitting(false)
@@ -270,6 +283,15 @@ export default function AttendanceSheet({
         {error && (
           <p className="text-sm text-center mb-2" style={{ color: '#DC2626' }}>
             {error}
+          </p>
+        )}
+        {offlineSaved && (
+          <p
+            className="text-sm text-center mb-2"
+            style={{ color: '#B45309' }}
+            data-testid="offline-saved-message"
+          >
+            Chamada salva. Será sincronizada quando a conexão retornar.
           </p>
         )}
         <button

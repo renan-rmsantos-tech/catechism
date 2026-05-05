@@ -2,6 +2,8 @@ import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import ClassCard from '@/components/dashboard/class-card'
+import OfflineBanner from '@/components/offline-banner'
+import PendingSyncIndicator from '@/components/pending-sync-indicator'
 
 function formatGreetingDate(date: Date): string {
   return date
@@ -103,6 +105,8 @@ export default async function DashboardPage() {
 
   return (
     <>
+      <OfflineBanner />
+      <PendingSyncIndicator />
       {/* Mobile header */}
       <header
         data-testid="dashboard-header"
