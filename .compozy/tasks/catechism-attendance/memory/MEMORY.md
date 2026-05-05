@@ -7,6 +7,8 @@ Keep only durable, cross-task context here. Do not duplicate facts that are obvi
 - Task 01 (Scaffold) complete. Next.js 16.2.4 + Supabase SSR + shadcn/ui + Vitest scaffolded and deployed.
 - Task 02 (Schema) complete. Migration, seed, TypeScript types, and 68 tests (100% coverage) all done.
 - Task 03 (Auth) complete. Login page, Server Actions, proxy.ts role routing, placeholder pages, 104 tests (98%+ coverage).
+- Task 04 (Design System) complete. Amber CSS tokens, Inter font, Sidebar, admin/dashboard layouts, Badge, Card, 141 tests (98.78% coverage).
+- Task 05 (Classes & Catechists) complete. API routes (academic-years, classes, catechists, invite), coordinator dashboard (Paper screen 3), class form, archive action. 192 tests (98%+ coverage).
 - Vercel project linked: `rmsantos-team/catechism`. Production alias: https://catechism-kohl.vercel.app/
 - Supabase env vars set to placeholder values in Vercel; must be replaced with real Supabase project credentials before any Supabase-dependent task works.
 - **`supabase db push` + Studio validation pending**: requires Docker Desktop running or real Supabase project credentials. Manual prerequisite for any task that queries the DB.
@@ -38,6 +40,24 @@ Keep only durable, cross-task context here. Do not duplicate facts that are obvi
 - **`supabase db push` blocked**: Docker daemon not running + placeholder credentials. Must start Docker Desktop and/or add real Supabase project credentials before any task needs a live DB.
 - **proxy.ts queries profiles on every request**: Role lookup is a DB query per page load. Acceptable for MVP but may need caching (e.g. role cookie) in later tasks if performance is a concern.
 
+## Shared Decisions (task_04)
+
+- **Amber shadcn overrides**: `--primary`, `--accent`, `--border`, `--background`, `--foreground` overridden in `:root` to amber palette. shadcn `Button variant="default"` is now the amber primary CTA — no changes to button.tsx needed.
+- **Sidebar**: Client Component (`'use client'`) using `usePathname()`. Responsive hide via `hidden lg:flex` on the `<aside>`. Active route detection: exact match for `/admin`, `startsWith` for sub-routes.
+- **Coverage scope extended**: `vitest.config.ts` `include` now covers `components/**/*.tsx` in addition to `lib/**/*.ts`.
+- **jsdom env for component tests**: Use `// @vitest-environment jsdom` docblock per test file. `environmentMatchGlobs` not typed in this vitest version.
+- **`@testing-library/dom`**: Missing peer dep — must be installed before `@testing-library/react` works.
+
 ## Handoffs
 
 - **→ task_04+**: Real Supabase credentials needed in `.env.local` for any feature that touches the DB (login will fail without them). Auth routing is fully implemented in proxy.ts.
+- **→ task_05+**: Layouts are ready. `app/admin/layout.tsx` wraps coordinator pages with sidebar. `app/dashboard/layout.tsx` wraps catechist pages with mobile header. Feature pages go in `app/admin/[section]/` and `app/dashboard/[section]/`.
+- **→ task_06+**: API endpoints for academic-years, classes, and catechists are implemented. `DashboardView` and `ClassForm` components live in `components/admin/`. `archiveClassAction` returns `void` (no useActionState) — use Server Actions returning `ActionState` with `useActionState` for mutation forms that show errors.
+
+## Shared Decisions (task_05)
+
+- **Zod v4 UUID validation is strict**: `z.string().uuid()` enforces RFC 4122 variant bits. Test UUIDs must have variant nibble 8/9/a/b in 4th group. Use `550e8400-e29b-41d4-a716-446655440000` pattern.
+- **`createSupabaseAdminClient` in `lib/supabase/server.ts`**: uses `createClient` from `@supabase/supabase-js` with service role key. Required for `auth.admin.inviteUserByEmail`.
+- **Server Component data extraction pattern**: extract rendering to `components/admin/` pure components that accept data as props — enables jsdom unit testing of coordinator UI without RSC rendering.
+- **Test mock fluent chain**: use `mockReturnThis()` for intermediate methods, `mockResolvedValue()` for terminal methods. Add `then` property to make chain directly awaitable. `makeInsertChain` for `.insert().select().single()` pattern.
+- **Route Handler test casting**: `new Request(...)` must be cast to `Parameters<typeof POST>[0]` since plain `Request` is not `NextRequest`.

@@ -1,6 +1,6 @@
 ---
 title: Design System e Layouts Base
-status: pending
+status: completed
 type: frontend
 complexity: medium
 dependencies:
@@ -34,13 +34,13 @@ Implementa o design system completo (paleta âmbar, tipografia Inter, CSS variab
 </requirements>
 
 ## Subtasks
-- [ ] 4.1 Abrir o Paper MCP, capturar screenshot das 4 telas e extrair valores exatos (cores, espaçamentos, fontes) via `get_computed_styles` e `get_jsx`
-- [ ] 4.2 Definir CSS variables no `globals.css` com todos os tokens da paleta âmbar do TechSpec
-- [ ] 4.3 Configurar Inter via `next/font/google` e aplicar ao `layout.tsx` raiz
-- [ ] 4.4 Criar componente `Sidebar` para o painel do coordenador (Paper screen 3 como referência)
-- [ ] 4.5 Criar `app/admin/layout.tsx` com sidebar + área de conteúdo
-- [ ] 4.6 Criar `app/dashboard/layout.tsx` com header mobile e área de conteúdo
-- [ ] 4.7 Criar componentes base reutilizáveis: `Button` (primário âmbar), `Card`, `Badge` (Feita/Pendente)
+- [x] 4.1 Abrir o Paper MCP, capturar screenshot das 4 telas e extrair valores exatos (cores, espaçamentos, fontes) via `get_computed_styles` e `get_jsx`
+- [x] 4.2 Definir CSS variables no `globals.css` com todos os tokens da paleta âmbar do TechSpec
+- [x] 4.3 Configurar Inter via `next/font/google` e aplicar ao `layout.tsx` raiz
+- [x] 4.4 Criar componente `Sidebar` para o painel do coordenador (Paper screen 3 como referência)
+- [x] 4.5 Criar `app/admin/layout.tsx` com sidebar + área de conteúdo
+- [x] 4.6 Criar `app/dashboard/layout.tsx` com header mobile e área de conteúdo
+- [x] 4.7 Criar componentes base reutilizáveis: `Button` (primário âmbar), `Card`, `Badge` (Feita/Pendente)
 
 ## Implementation Details
 Consultar TechSpec → **Design System** para todos os tokens de cor e referências de artboard no Paper.
@@ -83,16 +83,16 @@ Consultar TechSpec → **Design System** para todos os tokens de cor e referênc
 
 ## Tests
 - Unit tests:
-  - [ ] Sidebar renderiza item ativo com cor âmbar (`--accent`)
-  - [ ] Badge "Feita" renderiza com cor de sucesso; Badge "Pendente" com cor de texto secundário
-  - [ ] Layout do coordenador renderiza sidebar em viewport desktop (≥1024px)
-  - [ ] Layout do catequista renderiza sem sidebar em viewport mobile (390px)
-  - [ ] Componente Button primário aplica `--accent` como background
+  - [x] Sidebar renderiza item ativo com cor âmbar (`--accent`)
+  - [x] Badge "Feita" renderiza com cor de sucesso; Badge "Pendente" com cor de texto secundário
+  - [x] Layout do coordenador renderiza sidebar em viewport desktop (≥1024px)
+  - [x] Layout do catequista renderiza sem sidebar em viewport mobile (390px)
+  - [x] Componente Button primário aplica `--accent` como background
 - Integration tests:
-  - [ ] Rota `/admin/dashboard` renderiza layout com sidebar visível
-  - [ ] Rota `/dashboard` renderiza layout mobile sem sidebar
-- Test coverage target: >=80%
-- All tests must pass
+  - [x] Rota `/admin/dashboard` renderiza layout com sidebar visível
+  - [x] Rota `/dashboard` renderiza layout mobile sem sidebar
+- Test coverage target: >=80% — **98.78% achieved**
+- All tests must pass — **141/141 passing**
 
 ## Success Criteria
 - All tests passing

@@ -1,6 +1,6 @@
 ---
 title: Gestão de Turmas e Catequistas
-status: pending
+status: completed
 type: frontend
 complexity: medium
 dependencies:
@@ -34,13 +34,13 @@ Implementa o CRUD completo de anos letivos, turmas e catequistas no painel do co
 </requirements>
 
 ## Subtasks
-- [ ] 5.1 Consultar Paper screen 3 via MCP e extrair estrutura da tabela de turmas e cards de estatísticas
-- [ ] 5.2 Implementar Route Handlers para anos letivos: `GET /api/academic-years`, `POST /api/academic-years`
-- [ ] 5.3 Implementar Route Handlers para turmas: `GET /api/classes`, `POST /api/classes`, `PATCH /api/classes/[id]`
-- [ ] 5.4 Implementar Route Handlers para catequistas: `GET /api/catechists`, `POST /api/catechists/invite`
-- [ ] 5.5 Implementar página dashboard `/admin` com cards de estatísticas e tabela de turmas ativas
-- [ ] 5.6 Implementar formulário de criação/edição de turma com seleção de catequista(s) e ano letivo
-- [ ] 5.7 Implementar ação de arquivamento de turma (soft delete via `is_archived`)
+- [x] 5.1 Consultar Paper screen 3 via MCP e extrair estrutura da tabela de turmas e cards de estatísticas
+- [x] 5.2 Implementar Route Handlers para anos letivos: `GET /api/academic-years`, `POST /api/academic-years`
+- [x] 5.3 Implementar Route Handlers para turmas: `GET /api/classes`, `POST /api/classes`, `PATCH /api/classes/[id]`
+- [x] 5.4 Implementar Route Handlers para catequistas: `GET /api/catechists`, `POST /api/catechists/invite`
+- [x] 5.5 Implementar página dashboard `/admin` com cards de estatísticas e tabela de turmas ativas
+- [x] 5.6 Implementar formulário de criação/edição de turma com seleção de catequista(s) e ano letivo
+- [x] 5.7 Implementar ação de arquivamento de turma (soft delete via `is_archived`)
 
 ## Implementation Details
 Consultar TechSpec → **API Endpoints** para os contratos completos dos endpoints desta task.
@@ -80,15 +80,15 @@ A página de dashboard deve ser implementada como Server Component para buscar o
 
 ## Tests
 - Unit tests:
-  - [ ] Validação Zod: nome de turma obrigatório
-  - [ ] Validação Zod: ano letivo deve ser número inteiro positivo
-  - [ ] `PATCH /api/classes/[id]` com `is_archived: true` arquiva a turma sem deletar
+  - [x] Validação Zod: nome de turma obrigatório
+  - [x] Validação Zod: ano letivo deve ser número inteiro positivo
+  - [x] `PATCH /api/classes/[id]` com `is_archived: true` arquiva a turma sem deletar
 - Integration tests:
-  - [ ] `GET /api/classes` para catequista retorna apenas suas turmas (RLS)
-  - [ ] `GET /api/classes` para coordenador retorna todas as turmas
-  - [ ] `POST /api/classes` por catequista retorna 403
-  - [ ] Dashboard do coordenador renderiza turmas ativas com dados corretos
-  - [ ] Turma arquivada não aparece no dashboard
+  - [x] `GET /api/classes` para catequista retorna apenas suas turmas (RLS)
+  - [x] `GET /api/classes` para coordenador retorna todas as turmas
+  - [x] `POST /api/classes` por catequista retorna 403
+  - [x] Dashboard do coordenador renderiza turmas ativas com dados corretos
+  - [x] Turma arquivada não aparece no dashboard
 - Test coverage target: >=80%
 - All tests must pass
 

@@ -4,44 +4,36 @@ Keep only task-local execution context here. Do not duplicate facts that are obv
 
 ## Objective Snapshot
 
-Scaffold greenfield Next.js 15 (App Router) project with Supabase, shadcn/ui, Tailwind CSS, and Vitest tests.
-Workspace was empty (only dot-directories from tooling). Starting from zero.
+COMPLETE. Scaffolded Next.js 16.2.4 + Supabase SSR + shadcn/ui. 15 unit tests, 100% coverage. Build clean. Deployed to Vercel, HTTP 200 verified.
 
 ## Important Decisions
 
-- Using Vitest (not Jest) for unit tests — simpler ESM configuration with Next.js 15 App Router
-- env var validation via a `lib/supabase/config.ts` module that throws descriptive errors at import time when vars are missing
-- Three Supabase client flavors required: `lib/supabase/client.ts` (browser), `lib/supabase/server.ts` (server), `lib/supabase/middleware.ts` (middleware)
-- `.env.local` created with placeholder values only — real credentials must be filled in manually; `.env.example` committed as documentation
-- `middleware.ts` at root created as a placeholder pointing to `lib/supabase/middleware.ts` (task_03 will fill it)
-- Integration tests that require real Supabase credentials are skipped when env vars are not set
-- `SUPABASE_SERVICE_ROLE_KEY` must never appear in any client-side file — only imported in server-only modules
+- Used Vitest (not Jest) — simpler ESM config with Next.js 16
+- proxy.ts is a passthrough placeholder (not `middleware.ts`) — Next.js 16 renamed the convention
+- env var validation in `lib/supabase/config.ts` via `getPublicEnv()` / `getServiceRoleKey()` — lazy validation at call time
+- Excluded `lib/utils.ts` from coverage (shadcn generated)
+- `cookies()` from next/headers must be awaited — Next.js 16 async API
 
 ## Learnings
 
-- `create-next-app@latest` with explicit flags (`--typescript --tailwind --app --no-src-dir --import-alias "@/*" --no-eslint --yes`) runs non-interactively even with existing dot-directories in the folder
-- `npx shadcn@latest init --defaults -y` initializes shadcn/ui with no prompts using the New York style and default theme
+- Scaffolded in /tmp to avoid directory conflict, then rsync'd to project root
+- Vercel env pull overwrites .env.local — must restore placeholder values after pull
+- `vercel link --yes` detects Next.js automatically and creates `.vercel/project.json`
 
 ## Files / Surfaces
 
-- `package.json` — dependencies including vitest, @supabase/supabase-js, @supabase/ssr, react-hook-form, zod, dexie
-- `vitest.config.ts` — test runner config
-- `lib/supabase/client.ts` — browser Supabase client
-- `lib/supabase/server.ts` — server Supabase client (Server Components, Server Actions)
-- `lib/supabase/middleware.ts` — middleware Supabase client
-- `lib/supabase/config.ts` — env var validation (throws on missing vars)
-- `middleware.ts` — root middleware placeholder
-- `.env.example` — documents required env vars (committed)
-- `.env.local` — actual env vars with placeholders (NOT committed)
-- `types/index.ts` — shared TypeScript type stubs
-- `__tests__/supabase-client.test.ts` — unit tests for Supabase clients
+- `lib/supabase/config.ts`, `client.ts`, `server.ts`, `middleware.ts`
+- `proxy.ts` — root proxy (passthrough)
+- `types/index.ts` — domain types
+- `__tests__/supabase-client.test.ts` — 15 tests, 100% coverage
+- `vitest.config.ts`, `.env.example`, `.env.local`
+- `.vercel/project.json` — Vercel project link
 
 ## Errors / Corrections
 
-(none yet)
+- Coverage initially 51% — added tests for setAll callbacks in server.ts and middleware.ts, excluded lib/utils.ts
+- proxy.ts originally imported updateSession from lib/supabase/middleware — reverted to passthrough to avoid Supabase network calls with placeholder credentials during deploy
 
 ## Ready for Next Run
 
-- Vercel linking (subtask 1.5) requires manual action: `vercel link` and `vercel env pull`
-- Supabase real credentials (subtask 1.4) must be obtained from Supabase dashboard and set in `.env.local` and Vercel env panel
-- Integration test for Supabase connection is conditional on real credentials being set
+Task complete. Supabase real credentials needed before task_02. See MEMORY.md for handoff notes.
