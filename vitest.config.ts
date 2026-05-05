@@ -7,11 +7,12 @@ export default defineConfig({
   test: {
     environment: 'node',
     globals: true,
+    setupFiles: ['__tests__/setup.ts'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json-summary'],
-      include: ['lib/**/*.ts'],
-      exclude: ['**/*.test.ts', '**/*.d.ts', 'lib/utils.ts'],
+      include: ['lib/**/*.ts', 'components/**/*.tsx'],
+      exclude: ['**/*.test.ts', '**/*.test.tsx', '**/*.d.ts', 'lib/utils.ts'],
       thresholds: {
         global: {
           branches: 80,
