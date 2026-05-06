@@ -49,14 +49,14 @@ Documentação de produto e arquitetura (fonte da verdade para escopo e stack):
 1. Crie o projeto em [Supabase Dashboard](https://supabase.com/dashboard) e copie **URL** e chaves em **Project Settings → API Keys**.
 2. **Aplique o schema** (nesta ordem):
    - **CLI (recomendado):** na raiz do repo, `npm install`, `npm run supabase:link` (liga a pasta `supabase/` ao projeto), depois `npm run supabase:push` para enviar as migrações.
-   - **SQL Editor:** execute manualmente [`supabase/migrations/0001_initial_schema.sql`](supabase/migrations/0001_initial_schema.sql) e em seguida [`supabase/migrations/0002_revoke_rls_auto_enable_rpc.sql`](supabase/migrations/0002_revoke_rls_auto_enable_rpc.sql).
-3. Ative a extensão **pgcrypto** em **Database → Extensions** (o script de teste também tenta criá-la se faltar).
-4. **Contas de teste (homologação / dev):** no **SQL Editor**, execute [`supabase/scripts/setup_cloud_test_users.sql`](supabase/scripts/setup_cloud_test_users.sql). Em **produção com dados reais**, não use estas palavras-passe; prefira registo pela UI ou credenciais próprias.
+   - **SQL Editor:** execute [`supabase/migrations/0001_initial_schema.sql`](supabase/migrations/0001_initial_schema.sql) (schema completo, extensão `pgcrypto` e endurecimento de RPC).
+3. Se algo falhar na criação da extensão, em **Database → Extensions** ative manualmente **pgcrypto**.
+4. **Contas e dados de teste (homologação / dev):** no **SQL Editor**, execute [`supabase/seed.sql`](supabase/seed.sql) (ficheiro único: secção A = só login; secção B = turmas/alunos/chamada). Em **produção com dados reais**, não use estas palavras-passe; prefira registo pela UI ou credenciais próprias.
 5. **Authentication → URL configuration:** **Site URL** = URL principal da app (por exemplo o domínio de **Production** na Vercel). Em **Redirect URLs**, inclua as origens que a Vercel usa, por exemplo `https://seu-app.vercel.app/**` e, para previews, `https://*.vercel.app/**` (ou liste URLs fixas, conforme a política que quiser).
 
 Repita os passos 2–5 no projeto Supabase de **produção** quando for dar deploy final.
 
-### Contas de teste (após `setup_cloud_test_users.sql`)
+### Contas de teste (após executar `seed.sql`, secção A)
 
 | E-mail | Papel | Nome no perfil |
 | --- | --- | --- |
@@ -109,7 +109,7 @@ npm run lint
 npm test
 ```
 
-O ficheiro [`supabase/seed.sql`](supabase/seed.sql) destina-se a quem usa **stack local** do Supabase (`supabase start` / `db reset`). No fluxo **só nuvem**, ignore-o e use o script SQL em `supabase/scripts/` no dashboard.
+O ficheiro [`supabase/seed.sql`](supabase/seed.sql) destina-se também ao **SQL Editor** na nuvem (secções A e opcionalmente B); no fluxo **só nuvem** sem stack local, ignore `supabase db reset` e execute o SQL no dashboard.
 
 ---
 

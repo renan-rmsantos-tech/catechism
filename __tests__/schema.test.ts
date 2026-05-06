@@ -72,7 +72,7 @@ describe('0001_initial_schema.sql — indexes', () => {
 
 describe('0001_initial_schema.sql — trigger handle_new_user', () => {
   it('defines the handle_new_user function', () => {
-    expect(migrationSQL).toMatch(/CREATE OR REPLACE FUNCTION handle_new_user\(\)/i)
+    expect(migrationSQL).toMatch(/CREATE OR REPLACE FUNCTION public\.handle_new_user\(\)/i)
   })
 
   it('revokes handle_new_user RPC from PUBLIC, anon, authenticated', () => {
@@ -96,8 +96,8 @@ describe('0001_initial_schema.sql — trigger handle_new_user', () => {
     expect(migrationSQL).toMatch(/raw_user_meta_data->>'full_name'/i)
   })
 
-  it('trigger uses raw_user_meta_data for role', () => {
-    expect(migrationSQL).toMatch(/raw_user_meta_data->>'role'/i)
+  it('trigger sets new profiles to catechist (does not trust metadata for privileged roles)', () => {
+    expect(migrationSQL).toMatch(/INSERT INTO public\.profiles[\s\S]*'catechist'/i)
   })
 })
 
@@ -151,7 +151,29 @@ describe('0001_initial_schema.sql — Row Level Security', () => {
   })
 
   it('defines INSERT policy on attendance_sessions with WITH CHECK', () => {
-    expect(migrationSQL).toMatch(/CREATE POLICY attendance_sessions_insert ON attendance_sessions\s+FOR INSERT WITH CHECK/i)
+    expect(migrationSQL).toMatch(
+      /CREATE POLICY attendance_sessions_insert ON attendance_sessions\s+FOR INSERT TO authenticated\s+WITH CHECK/i
+    )
+  })
+})
+
+describe('0001_initial_schema.sql — extensions and Supabase RPC hardening', () => {
+  it('enables pgcrypto in extensions schema', () => {
+    expect(migrationSQL).toMatch(/CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA extensions/i)
+  })
+
+  it('sets empty search_path on SECURITY DEFINER functions (Supabase hardening)', () => {
+    expect(migrationSQL).toMatch(/SET search_path = ''/i)
+  })
+
+  it('does not grant private schema usage to anon', () => {
+    expect(migrationSQL).not.toMatch(/GRANT USAGE ON SCHEMA private TO anon/i)
+  })
+
+  it('conditionally revokes rls_auto_enable from anon/authenticated when present', () => {
+    expect(migrationSQL).toMatch(/proname = 'rls_auto_enable'/i)
+    expect(migrationSQL).toMatch(/REVOKE ALL ON FUNCTION public\.rls_auto_enable\(\)/i)
+    expect(migrationSQL).toMatch(/FROM PUBLIC,\s*anon,\s*authenticated/i)
   })
 })
 

@@ -1,73 +1,98 @@
--- Seed opcional: usado apenas com `supabase db reset` (stack Docker local).
--- Fluxo apenas nuvem: aplique migrações no projeto Supabase e rode
--- supabase/scripts/setup_cloud_test_users.sql no SQL Editor.
+-- Seed de desenvolvimento / homologação (senhas fracas — nunca em produção real).
+--
+-- Uso:
+--   • `supabase db reset` (stack local): aplica migrações e este ficheiro completo (`config.toml`).
+--   • SQL Editor (nuvem): após migrações, execute o ficheiro inteiro, ou só a **SECÇÃO A** se quiser
+--     apenas contas de teste (sem turmas/alunos/chamadas). A secção B depende dos utilizadores da A.
+--
+-- Senha das três contas de teste: password123
 
--- ============================================================
--- USERS (auth.users + profiles)
--- Uses pgcrypto to hash passwords — works locally and in production.
--- Password for all dev accounts: password123
--- ============================================================
+-- ############################################################################
+-- SECÇÃO A — Utilizadores Auth + perfis (mínimo para login na app na nuvem)
+-- ############################################################################
+
+-- Opcional: remover contas de teste para um rerun limpo no SQL Editor (cloud).
+DELETE FROM auth.users WHERE id IN (
+  '00000000-0000-0000-0000-000000000001',
+  '00000000-0000-0000-0000-000000000002',
+  '00000000-0000-0000-0000-000000000003'
+);
 
 INSERT INTO auth.users (
   instance_id,
-  id, email, encrypted_password, email_confirmed_at,
-  raw_app_meta_data, raw_user_meta_data, created_at, updated_at,
-  aud, role,
-  confirmation_token, email_change, email_change_token_new, recovery_token
+  id,
+  aud,
+  role,
+  email,
+  encrypted_password,
+  email_confirmed_at,
+  raw_app_meta_data,
+  raw_user_meta_data,
+  created_at,
+  updated_at,
+  confirmation_token,
+  email_change,
+  email_change_token_new,
+  recovery_token
 ) VALUES
   (
     '00000000-0000-0000-0000-000000000000',
     '00000000-0000-0000-0000-000000000001',
+    'authenticated',
+    'authenticated',
     'coord@catechism.dev',
     crypt('password123', gen_salt('bf', 10)),
     now(),
     '{"provider":"email","providers":["email"]}',
     '{"full_name":"Maria Coordenadora","role":"coordinator"}',
-    now(), now(), 'authenticated', 'authenticated',
+    now(), now(),
     '', '', '', ''
   ),
   (
     '00000000-0000-0000-0000-000000000000',
     '00000000-0000-0000-0000-000000000002',
+    'authenticated',
+    'authenticated',
     'catechist1@catechism.dev',
     crypt('password123', gen_salt('bf', 10)),
     now(),
     '{"provider":"email","providers":["email"]}',
     '{"full_name":"João Catequista","role":"catechist"}',
-    now(), now(), 'authenticated', 'authenticated',
+    now(), now(),
     '', '', '', ''
   ),
   (
     '00000000-0000-0000-0000-000000000000',
     '00000000-0000-0000-0000-000000000003',
+    'authenticated',
+    'authenticated',
     'catechist2@catechism.dev',
     crypt('password123', gen_salt('bf', 10)),
     now(),
     '{"provider":"email","providers":["email"]}',
     '{"full_name":"Ana Catequista","role":"catechist"}',
-    now(), now(), 'authenticated', 'authenticated',
+    now(), now(),
     '', '', '', ''
   )
 ON CONFLICT (id) DO NOTHING;
 
--- Profiles (the trigger handles this on real user creation; insert directly for seed)
+-- O trigger cria sempre catechist; aqui fixamos o coordenador e nomes.
 INSERT INTO profiles (id, full_name, role) VALUES
   ('00000000-0000-0000-0000-000000000001', 'Maria Coordenadora', 'coordinator'),
   ('00000000-0000-0000-0000-000000000002', 'João Catequista',    'catechist'),
   ('00000000-0000-0000-0000-000000000003', 'Ana Catequista',     'catechist')
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT (id) DO UPDATE SET
+  full_name = EXCLUDED.full_name,
+  role = EXCLUDED.role;
 
--- ============================================================
--- ACADEMIC YEAR
--- ============================================================
+-- ############################################################################
+-- SECÇÃO B — Dados de exemplo (ano letivo, turmas, alunos, chamada)
+-- Omitir na nuvem se só precisar da Secção A.
+-- ############################################################################
 
 INSERT INTO academic_years (id, year, is_active) VALUES
   ('10000000-0000-0000-0000-000000000001', 2026, TRUE)
 ON CONFLICT (id) DO NOTHING;
-
--- ============================================================
--- CLASSES
--- ============================================================
 
 INSERT INTO classes (id, academic_year_id, name, level, schedule) VALUES
   (
@@ -86,18 +111,10 @@ INSERT INTO classes (id, academic_year_id, name, level, schedule) VALUES
   )
 ON CONFLICT (id) DO NOTHING;
 
--- ============================================================
--- CLASS–CATECHIST ASSIGNMENTS
--- ============================================================
-
 INSERT INTO class_catechists (class_id, catechist_id) VALUES
   ('20000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000002'),
   ('20000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000003')
 ON CONFLICT DO NOTHING;
-
--- ============================================================
--- STUDENTS (5 total: 3 in Turma A, 2 in Turma B)
--- ============================================================
 
 INSERT INTO students (id, class_id, full_name, birth_date, city, first_communion, confirmation) VALUES
   (
@@ -141,10 +158,6 @@ INSERT INTO students (id, class_id, full_name, birth_date, city, first_communion
     TRUE, FALSE
   )
 ON CONFLICT (id) DO NOTHING;
-
--- ============================================================
--- SAMPLE ATTENDANCE SESSION + RECORDS (for Turma A, 2026-04-05)
--- ============================================================
 
 INSERT INTO attendance_sessions (id, class_id, date, catechist_id, synced_at) VALUES
   (
