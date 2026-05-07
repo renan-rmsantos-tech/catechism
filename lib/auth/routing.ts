@@ -1,10 +1,10 @@
 import type { UserRole } from '@/lib/supabase/types'
 
-const PUBLIC_PATHS = ['/login']
+const PUBLIC_PATHS = ['/', '/login']
 const PROTECTED_PATHS = ['/admin', '/dashboard'] as const
 
 export function isPublicPath(pathname: string): boolean {
-  return PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p + '/'))
+  return PUBLIC_PATHS.some((p) => pathname === p || (p !== '/' && pathname.startsWith(p + '/')))
 }
 
 export function isProtectedPath(pathname: string): boolean {
@@ -17,17 +17,21 @@ export function isProtectedPath(pathname: string): boolean {
  */
 export function getUnauthenticatedRedirect(pathname: string): string | null {
   if (isPublicPath(pathname)) return null
-  return '/login'
+  return '/'
 }
 
 /**
  * Returns the redirect path when an authenticated user accesses the wrong role area, or null if allowed.
- * Authenticated users should not see /login (redirect to their home).
+ * Authenticated users should not see the login screen (redirect to their home).
  * /admin is for coordinators only.
  * /dashboard is for catechists only.
  */
 export function getRoleRedirect(pathname: string, role: UserRole): string | null {
-  if (pathname === '/login' || pathname.startsWith('/login/')) {
+  if (
+    pathname === '/' ||
+    pathname === '/login' ||
+    pathname.startsWith('/login/')
+  ) {
     return role === 'coordinator' ? '/admin' : '/dashboard'
   }
   if ((pathname === '/admin' || pathname.startsWith('/admin/')) && role !== 'coordinator') {

@@ -51,6 +51,11 @@ describe('loginSchema — password validation', () => {
 // ============================================================
 
 describe('isPublicPath', () => {
+  it('returns true for /', async () => {
+    const { isPublicPath } = await import('../lib/auth/routing')
+    expect(isPublicPath('/')).toBe(true)
+  })
+
   it('returns true for /login', async () => {
     const { isPublicPath } = await import('../lib/auth/routing')
     expect(isPublicPath('/login')).toBe(true)
@@ -69,6 +74,11 @@ describe('isPublicPath', () => {
   it('returns false for /dashboard', async () => {
     const { isPublicPath } = await import('../lib/auth/routing')
     expect(isPublicPath('/dashboard')).toBe(false)
+  })
+
+  it('returns false for /admin/foo (not public)', async () => {
+    const { isPublicPath } = await import('../lib/auth/routing')
+    expect(isPublicPath('/admin/foo')).toBe(false)
   })
 })
 
@@ -92,36 +102,51 @@ describe('isProtectedPath', () => {
     const { isProtectedPath } = await import('../lib/auth/routing')
     expect(isProtectedPath('/login')).toBe(false)
   })
+
+  it('returns false for / (login lives at root)', async () => {
+    const { isProtectedPath } = await import('../lib/auth/routing')
+    expect(isProtectedPath('/')).toBe(false)
+  })
 })
 
 describe('getUnauthenticatedRedirect', () => {
+  it('returns null for / (public path)', async () => {
+    const { getUnauthenticatedRedirect } = await import('../lib/auth/routing')
+    expect(getUnauthenticatedRedirect('/')).toBeNull()
+  })
+
   it('returns null for /login (public path)', async () => {
     const { getUnauthenticatedRedirect } = await import('../lib/auth/routing')
     expect(getUnauthenticatedRedirect('/login')).toBeNull()
   })
 
-  it('redirects to /login for /admin (protected path)', async () => {
+  it('redirects to / for /admin (protected path)', async () => {
     const { getUnauthenticatedRedirect } = await import('../lib/auth/routing')
-    expect(getUnauthenticatedRedirect('/admin')).toBe('/login')
+    expect(getUnauthenticatedRedirect('/admin')).toBe('/')
   })
 
-  it('redirects to /login for /dashboard (protected path)', async () => {
+  it('redirects to / for /dashboard (protected path)', async () => {
     const { getUnauthenticatedRedirect } = await import('../lib/auth/routing')
-    expect(getUnauthenticatedRedirect('/dashboard')).toBe('/login')
+    expect(getUnauthenticatedRedirect('/dashboard')).toBe('/')
   })
 
-  it('redirects to /login for /dashboard/turma/123', async () => {
+  it('redirects to / for /dashboard/turma/123', async () => {
     const { getUnauthenticatedRedirect } = await import('../lib/auth/routing')
-    expect(getUnauthenticatedRedirect('/dashboard/turma/123')).toBe('/login')
+    expect(getUnauthenticatedRedirect('/dashboard/turma/123')).toBe('/')
   })
 
-  it('redirects to /login for any unknown path', async () => {
+  it('redirects to / for any unknown path', async () => {
     const { getUnauthenticatedRedirect } = await import('../lib/auth/routing')
-    expect(getUnauthenticatedRedirect('/settings')).toBe('/login')
+    expect(getUnauthenticatedRedirect('/settings')).toBe('/')
   })
 })
 
 describe('getRoleRedirect — catechist', () => {
+  it('redirects catechist on / to /dashboard', async () => {
+    const { getRoleRedirect } = await import('../lib/auth/routing')
+    expect(getRoleRedirect('/', 'catechist')).toBe('/dashboard')
+  })
+
   it('redirects catechist on /login to /dashboard', async () => {
     const { getRoleRedirect } = await import('../lib/auth/routing')
     expect(getRoleRedirect('/login', 'catechist')).toBe('/dashboard')
@@ -149,6 +174,11 @@ describe('getRoleRedirect — catechist', () => {
 })
 
 describe('getRoleRedirect — coordinator', () => {
+  it('redirects coordinator on / to /admin', async () => {
+    const { getRoleRedirect } = await import('../lib/auth/routing')
+    expect(getRoleRedirect('/', 'coordinator')).toBe('/admin')
+  })
+
   it('redirects coordinator on /login to /admin', async () => {
     const { getRoleRedirect } = await import('../lib/auth/routing')
     expect(getRoleRedirect('/login', 'coordinator')).toBe('/admin')
@@ -375,7 +405,7 @@ describe('loginAction — integration (mocked Supabase)', () => {
 })
 
 describe('logoutAction — integration (mocked Supabase)', () => {
-  it('calls signOut and redirects to /login', async () => {
+  it('calls signOut and redirects to /', async () => {
     vi.resetModules()
     const mockSignOut = vi.fn().mockResolvedValue({ error: null })
     const { createSupabaseServerClient } = await import('../lib/supabase/server')
@@ -383,7 +413,7 @@ describe('logoutAction — integration (mocked Supabase)', () => {
       auth: { signOut: mockSignOut },
     })
     const { logoutAction } = await import('../app/(auth)/login/actions')
-    await expect(logoutAction()).rejects.toThrow('REDIRECT:/login')
+    await expect(logoutAction()).rejects.toThrow('REDIRECT:/')
     expect(mockSignOut).toHaveBeenCalled()
   })
 })

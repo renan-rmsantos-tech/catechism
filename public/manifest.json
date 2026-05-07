@@ -2,7 +2,7 @@
   "name": "Catequese",
   "short_name": "Catequese",
   "description": "Sistema de gestão de presença para catecismo",
-  "start_url": "/dashboard",
+  "start_url": "/",
   "display": "standalone",
   "background_color": "#FFFDF7",
   "theme_color": "#B45309",

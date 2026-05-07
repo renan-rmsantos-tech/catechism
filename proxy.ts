@@ -36,7 +36,7 @@ export async function proxy(request: NextRequest) {
   const role = profile?.role && isValidRole(profile.role) ? profile.role : null
 
   if (!role) {
-    return NextResponse.redirect(new URL('/login', request.url))
+    return NextResponse.redirect(new URL('/', request.url))
   }
 
   const redirect = getRoleRedirect(pathname, role)

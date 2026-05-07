@@ -12,7 +12,7 @@ export default async function ChamadaPage({
   const {
     data: { user },
   } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  if (!user) redirect('/')
 
   // RLS enforces catechist can only see their assigned classes
   const { data: classData } = await supabase
